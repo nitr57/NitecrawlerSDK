@@ -47,7 +47,7 @@ Internal device tracking with:
 - CMake 3.10 or higher
 - C++14 compatible compiler
 - On Linux: Standard development tools (gcc/clang)
-- On Windows: Visual Studio or MinGW
+- On Windows: untested
 
 ### Build Steps
 
@@ -56,22 +56,6 @@ Internal device tracking with:
 mkdir build
 cd build
 cmake ..
-make
-```
-
-#### Windows (Visual Studio)
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-```
-
-#### Windows (MinGW)
-```bash
-mkdir build
-cd build
-cmake -G "MinGW Makefiles" ..
 make
 ```
 
@@ -175,58 +159,12 @@ The test program will:
 
 ## Platform-Specific Notes
 
-### Windows
-- Devices are accessed as `COM1`, `COM2`, etc.
-- Requires Windows 7 or later
-- setupapi.lib and cfgmgr32.lib are automatically linked
-
 ### Linux
-- Devices are accessed as `/dev/ttyUSB0`, `/dev/ttyACM0`, etc.
 - Requires proper udev rules for USB device access
 - May need to add user to `dialout` group: `sudo usermod -a -G dialout $USER`
-
-## Device Communication Protocol
-
-The SDK communicates with Nitecrawler devices using:
-- **Baud Rate**: 57600
-- **Data Bits**: 8
-- **Stop Bits**: 1
-- **Parity**: None
-- **Flow Control**: None
-
-### Command Format
-
-Commands are sent as ASCII strings followed by `\r` (carriage return).
-
-**Wake-up/Acknowledgment:**
-- Send: `#\r`
-- Response: `NACK#` (device acknowledgment)
-
-**Firmware Version Query:**
-- Send: `PV#\r`
-- Response: `X.Y` (e.g., "1.6" for firmware version 1.6)
-
-Other commands follow similar format with command codes followed by optional parameters and `#` terminator.
-
-## Integration with NINA
-
-To use this SDK in NINA (N.I.N.A. - Nighttime Imaging 'N' Astronomy):
-
-1. Build the SDK library
-2. Create a NINA plugin that:
-   - Loads the NitecrawlerSDK DLL/SO
-   - Implements the IFocuser interface
-   - Uses P/Invoke (C#) to call the SDK functions
-   - Maps SDK calls to NINA's focuser interface
-
-Example NINA plugin creation is available in the `NINAPlugin` directory.
-
-## License
-
-This implementation is provided for integration with NINA and other astronomy software.
 
 ## Support
 
 For issues or questions regarding:
-- Moonlite Nitecrawler hardware: https://www.moonlite.com/
+- Moonlite Nitecrawler hardware: https://www.focuser.com/
 - NINA software: https://nighttime-imaging.eu/

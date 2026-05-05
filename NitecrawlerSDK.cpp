@@ -105,7 +105,7 @@ NCAPI NC_ERROR_TYPE NCGetSDKVersion(char *version)
         return NC_ERROR_NULL_POINTER;
     }
 
-    strncpy(version, "1.1.0", NC_VERSION_LEN - 1);
+    strncpy(version, "1.1.1", NC_VERSION_LEN - 1);
     version[NC_VERSION_LEN - 1] = '\0';
 
     return NC_SUCCESS;

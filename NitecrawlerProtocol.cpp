@@ -527,9 +527,10 @@ namespace Nitecrawler
         char response[32];
         char cmd[8];
 
-        // Query for motor position
+        // Query for motor position. Use the retry variant so a single transient serial glitch
+        // on a polled status read does not surface as NC_ERROR_COMMUNICATION.
         snprintf(cmd, sizeof(cmd), "%dGP#", motorType);
-        RETURN_IF_ERROR(SendAndWaitForReply(device, cmd, response, 32));
+        RETURN_IF_ERROR(SendAndWaitForReplyWithRetry(device, cmd, response, 32, 200, 500, 3, 100, "motor position"));
 
         if (sscanf(response, "%d#", &position) != 1)
         {
@@ -555,9 +556,10 @@ namespace Nitecrawler
         char response[32];
         char cmd[8];
 
-        // Query for motor state
+        // Query for motor state. Use the retry variant so a single transient serial glitch
+        // on a polled status read does not surface as NC_ERROR_COMMUNICATION.
         snprintf(cmd, sizeof(cmd), "%dGM#", motorType);
-        RETURN_IF_ERROR(SendAndWaitForReply(device, cmd, response, 32));
+        RETURN_IF_ERROR(SendAndWaitForReplyWithRetry(device, cmd, response, 32, 200, 500, 3, 100, "motor state"));
 
         if (sscanf(response, "%d#", &state) != 1)
         {
@@ -583,8 +585,9 @@ namespace Nitecrawler
         char response[32];
         char cmd[8];
 
-        // Query for voltage
-        RETURN_IF_ERROR(SendAndWaitForReply(device, "GV#", response, 32));
+        // Query for voltage. Use the retry variant so a single transient serial glitch
+        // on a polled status read does not surface as NC_ERROR_COMMUNICATION.
+        RETURN_IF_ERROR(SendAndWaitForReplyWithRetry(device, "GV#", response, 32, 200, 500, 3, 100, "voltage"));
 
         int voltage;
         if (sscanf(response, "%d#", &voltage) != 1)
@@ -616,8 +619,9 @@ namespace Nitecrawler
         char response[32];
         char cmd[8];
 
-        // Query for temperature
-        RETURN_IF_ERROR(SendAndWaitForReply(device, "GT#", response, 32));
+        // Query for temperature. Use the retry variant so a single transient serial glitch
+        // on a polled status read does not surface as NC_ERROR_COMMUNICATION.
+        RETURN_IF_ERROR(SendAndWaitForReplyWithRetry(device, "GT#", response, 32, 200, 500, 3, 100, "temperature"));
 
         int temperature;
         if (sscanf(response, "%d#", &temperature) != 1)

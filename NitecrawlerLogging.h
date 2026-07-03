@@ -111,7 +111,7 @@ namespace Nitecrawler
      *
      * @return Pointer to static timestamp string buffer
      */
-    const char *WRGetTimestamp();
+    const char *NCGetTimestamp();
 
 } /* namespace Nitecrawler */
 

@@ -105,7 +105,7 @@ NCAPI NC_ERROR_TYPE NCGetSDKVersion(char *version)
         return NC_ERROR_NULL_POINTER;
     }
 
-    strncpy(version, "1.1.2", NC_VERSION_LEN - 1);
+    strncpy(version, "1.2.0", NC_VERSION_LEN - 1);
     version[NC_VERSION_LEN - 1] = '\0';
 
     return NC_SUCCESS;
@@ -318,7 +318,7 @@ static NC_ERROR_TYPE NCOpen(std::shared_ptr<Device> device)
         }
 
         // Initialize device properties from hardware
-        InitializeDeviceProperties(device);
+        RETURN_IF_ERROR(InitializeDeviceProperties(device));
         device->isOpen = true;
     }
 
@@ -448,15 +448,15 @@ NCAPI NC_ERROR_TYPE NCFocuserScan(int *number, int *ids)
             tempDevice->port = port;
             tempDevice->portName = deviceNode;
 
-            // Perform handshake with retry mechanism
+            // Perform handshake with retry mechanism. A failure here just means this
+            // particular candidate (which only matched on VID:PID, a generic FTDI chip
+            // shared with unrelated products) isn't a Nitecrawler - skip it and keep
+            // scanning rather than aborting the whole scan.
             NC_ERROR_TYPE stat = SendAndWaitForReplyWithRetry(tempDevice, "#", response, 32);
-            if(stat != NC_SUCCESS)
-            {
-                return stat;
-            }
 
-            // Check for handshake reply
-            if (strncmp(response, "NACK", 4) == 0)
+            // Check for handshake reply. NACK is the actual success reply for this
+            // protocol (a Moonlite quirk) - it is not a failure indicator.
+            if (stat == NC_SUCCESS && strncmp(response, "NACK", 4) == 0)
             {
                 NC_DEBUG("Valid device found!");
 
@@ -467,7 +467,13 @@ NCAPI NC_ERROR_TYPE NCFocuserScan(int *number, int *ids)
 
                 /* Valid device found - close port */
                 port->Close();
-                int id = count;
+
+                // Assign the smallest id not already in use so a newly found device
+                // never collides with (and silently replaces) an already-connected one.
+                int id = 0;
+                while (g_devices.find(id) != g_devices.end())
+                    id++;
+
                 g_devices[id] = tempDevice;
                 ids[count] = id;
                 count++;
@@ -611,7 +617,7 @@ NCAPI NC_ERROR_TYPE NCFocuserGetConfig(int id, NC_FOCUSER_CONFIG *config)
     if (it->second->accessMode != Device::AccessMode::FOCUSER_ONLY &&
         it->second->accessMode != Device::AccessMode::BOTH)
     {
-        NC_ERROR("Current access state: %s", it->second->accessMode == Device::AccessMode::FOCUSER_ONLY ? "focuser only" : (it->second->accessMode == Device::AccessMode::ROTATOR_ONLY ? "rotator only" : "both"));
+        NC_ERROR("Current access state: %s", it->second->accessMode == Device::AccessMode::ROTATOR_ONLY ? "rotator only" : "none");
         return NC_ERROR_INVALID_STATE;
     }
 
@@ -722,7 +728,7 @@ NCAPI NC_ERROR_TYPE NCFocuserGetStatus(int id, NC_FOCUSER_STATUS *status)
         if (it->second->accessMode != Device::AccessMode::FOCUSER_ONLY &&
             it->second->accessMode != Device::AccessMode::BOTH)
         {
-NC_ERROR("Current access state: %s", it->second->accessMode == Device::AccessMode::FOCUSER_ONLY ? "focuser only" : (it->second->accessMode == Device::AccessMode::ROTATOR_ONLY ? "rotator only" : "both"));
+            NC_ERROR("Current access state: %s", it->second->accessMode == Device::AccessMode::ROTATOR_ONLY ? "rotator only" : "none");
             return NC_ERROR_INVALID_STATE;
         }
 

@@ -266,7 +266,7 @@ namespace Nitecrawler
         RETURN_IF_ERROR(SendAndWaitForReply(device, "PF#", response, 32));
 
         char model[8];
-        if (sscanf(response, "%s#", model) == 1)
+        if (sscanf(response, "%7[^#]#", model) == 1)
         {
             if(strncmp(model, "NACK", 4) != 0)
             {
@@ -603,13 +603,13 @@ namespace Nitecrawler
 
     NC_ERROR_TYPE QueryTemperature(std::shared_ptr<Device> device)
     {
-        // Default: not detected
-        device->focuser.status.temperatureDetection = 0;
-
         if (!device)
         {
             return NC_ERROR_NULL_POINTER;
         }
+
+        // Default: not detected
+        device->focuser.status.temperatureDetection = 0;
 
         if (!device->port || !device->port->IsOpen())
         {
@@ -680,10 +680,10 @@ namespace Nitecrawler
             return NC_ERROR_COMMUNICATION;
         }
 
-        // Only initialize once
+        // Only initialize once; already-initialized is a harmless no-op, not an error
         if (device->initialized)
         {
-            return NC_ERROR_NULL_POINTER;
+            return NC_SUCCESS;
         }
 
         RETURN_IF_ERROR(QueryProductModel(device));
@@ -710,31 +710,6 @@ namespace Nitecrawler
         device->initialized = true;
 
         return NC_SUCCESS;
-    }
-
-    // Helper function to compute euclidian modulus
-    float EuclidianModulus(double x, double y)
-    {
-        if (y > 0)
-        {
-            double r = fmodf(x, y);
-            if (r < 0)
-            {
-                return r + y;
-            }
-            else
-            {
-                return r;
-            }
-        }
-        else if (y < 0)
-        {
-            return -1 * EuclidianModulus(-1 * x, -1 * y);
-        }
-        else
-        {
-            return 0.0f;
-        }
     }
 
     // Helper function to convert position steps to angle
